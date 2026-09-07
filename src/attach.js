@@ -24,7 +24,7 @@
 // These are internal to connect_shell; e2b-box's external exit codes don't change.
 import { Sandbox, NotFoundError, CommandExitError } from "e2b"
 
-import { planAttach, TERMINAL_MARKER } from "./attach-plan.js"
+import { planAttach, terminalDimensions, TERMINAL_MARKER } from "./attach-plan.js"
 import { loadConfig } from "./config.js"
 import { sdkConn, warnCredentials } from "./shared.js"
 import { readRecord, writeRecord } from "./store.js"
@@ -72,7 +72,7 @@ try {
   process.exit(NEVER_ATTACHED)
 }
 
-const dims = () => ({ cols: process.stdout.columns || 80, rows: process.stdout.rows || 24 })
+const dims = () => terminalDimensions({ cols: process.stdout.columns, rows: process.stdout.rows })
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 // One-line notices about which terminal you're getting. The dashboard owns its
 // own chrome, so it gets none of them — same rule as connect_shell's banner.
