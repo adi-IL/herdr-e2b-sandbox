@@ -34,17 +34,20 @@ try {
 
 const key = payload?.key
 const cmd = payload?.cmd
-const timeoutMs = Number(payload?.timeoutMs) || 15 * 60 * 1000
-if (!key || !cmd) {
+if (typeof key !== "string" || !key.trim() || typeof cmd !== "string" || !cmd.trim()) {
   emit({ error: "exec.js: need a box key and a command" })
 }
 
-let rec
-try {
-  rec = await readRecord(key)
-} catch (e) {
-  emit({ error: `exec.js: failed reading store for '${key}': ${(e && e.message) || String(e)}` })
+const rawTimeout = payload.timeoutMs ?? 15 * 60 * 1000
+if (typeof rawTimeout !== "number" && typeof rawTimeout !== "string") {
+  emit({ error: "exec.js: timeoutMs must be a positive integer" })
 }
+const timeoutMs = Number(rawTimeout)
+if (!Number.isSafeInteger(timeoutMs) || timeoutMs <= 0) {
+  emit({ error: "exec.js: timeoutMs must be a positive integer" })
+}
+
+const rec = await readRecord(key)
 if (!rec?.sandboxId) {
   emit({ error: `no sandbox tracked for '${key}'` })
 }
