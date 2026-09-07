@@ -4,7 +4,7 @@
 // decision lives in its own module (spec: the only new seam of ADR-0008).
 import { test } from "node:test"
 import assert from "node:assert/strict"
-import { planAttach } from "../src/attach-plan.js"
+import { planAttach, terminalDimensions } from "../src/attach-plan.js"
 
 const KEY = "mybox-abc123"
 const PANE = { cols: 120, rows: 30 }
@@ -85,3 +85,17 @@ test("single-row pane steps detour to 2 rows and back to 1", () => {
   assert.deepEqual(plan.resize, [{ cols: 80, rows: 2 }, { cols: 80, rows: 1 }])
 })
 
+test("terminal dimensions default independently and always produce positive integers", () => {
+  for (const value of [undefined, null, 0, -1, NaN, Infinity, -Infinity, "80", {}]) {
+    assert.deepEqual(terminalDimensions({ cols: value, rows: 30 }), { cols: 80, rows: 30 })
+    assert.deepEqual(terminalDimensions({ cols: 120, rows: value }), { cols: 120, rows: 24 })
+  }
+  assert.deepEqual(terminalDimensions(), { cols: 80, rows: 24 })
+  assert.deepEqual(terminalDimensions({ cols: 120.9, rows: 30.5 }), { cols: 120, rows: 30 })
+  assert.deepEqual(terminalDimensions({ cols: 0.5, rows: 0.1 }), { cols: 1, rows: 1 })
+})
+
+test("nonfinite dimensions use the default geometry for the repaint detour", () => {
+  const plan = planAttach({ terminalPid: 42, terminalCols: 80, terminalRows: 24 }, [OURS], { cols: Infinity, rows: NaN }, KEY)
+  assert.deepEqual(plan.resize, [{ cols: 80, rows: 23 }, { cols: 80, rows: 24 }])
+})

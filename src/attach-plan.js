@@ -6,6 +6,14 @@
  * Exported so the writer (attach.js) and this validator can never drift. */
 export const TERMINAL_MARKER = "HERDR_E2B_TERMINAL"
 
+function dimension(value, fallback) {
+  return Number.isFinite(value) && value > 0 ? Math.max(1, Math.floor(value)) : fallback
+}
+
+export function terminalDimensions(pane) {
+  return { cols: dimension(pane?.cols, 80), rows: dimension(pane?.rows, 24) }
+}
+
 /**
  * Decide whether to reattach to the box's recorded terminal or create a fresh
  * one, and how to make it repaint.
@@ -42,8 +50,7 @@ export function planAttach(rec, processes, pane, key) {
   if (!proc) return { action: "create", reason: "died" }
   if (proc.envs?.[TERMINAL_MARKER] !== key) return { action: "create", reason: "recycled" }
 
-  const cols = Math.max(1, Number(pane?.cols) > 0 ? Math.floor(Number(pane.cols)) : 80)
-  const rows = Math.max(1, Number(pane?.rows) > 0 ? Math.floor(Number(pane.rows)) : 24)
+  const { cols, rows } = terminalDimensions(pane)
 
   const sameSize = rec.terminalCols === cols && rec.terminalRows === rows
   const resize = sameSize
